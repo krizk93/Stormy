@@ -59,7 +59,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
        // mShowLocationTV = (TextView) findViewById(R.id.location_Text);
 
         //request in app permissions
-
         if (ContextCompat
                     .checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION)
                     != PackageManager.PERMISSION_GRANTED

@@ -7,26 +7,44 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.stormy.utilities.NetworkUtils;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.net.URL;
+import java.util.Locale;
+
 public class MainActivity extends AppCompatActivity implements LocationListener{
 
-    private TextView tv_City,
-            tv_Date,
-            tv_PrecipitationProbability,
-            tv_Temperature,
-            tv_ApparentTemperature;
-    TextView mShowLocationTV;
-    LocationManager locationManager;
-    String locationProvider;
+    private static final String TAG_MAIN = MainActivity.class.getSimpleName();
+
+    private TextView mTvCity,
+            mTvDate,
+            mTvPrecipitationProbability,
+            mTvTemperature,
+            mTvApparentTemperature,
+            mTvDayOfWeekNow;
+
+    private LocationManager mLocationManager;
+    private String mLocationProvider;
+
+    //temporary lat and long (Lisbon):
+    private double mLatitude = 38.734099;
+    private double mLongitude = -9.155056;
 
 
     @Override
@@ -47,16 +65,15 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
         actionBar.setCustomView(v);
 
         //Getting the views in the actionBar
-        tv_City = actionBar.getCustomView().findViewById(R.id.text_city);
-        tv_Date = actionBar.getCustomView().findViewById(R.id.text_date);
+        mTvCity = actionBar.getCustomView().findViewById(R.id.text_city);
+        mTvDate = actionBar.getCustomView().findViewById(R.id.text_date);
 
 
-        tv_PrecipitationProbability = findViewById(R.id.text_precipitation_chance);
-        tv_Temperature = findViewById(R.id.text_temperature_current);
-        tv_ApparentTemperature = findViewById(R.id.text_apparent_temperature);
+        mTvPrecipitationProbability = findViewById(R.id.text_precipitation_chance);
+        mTvTemperature = findViewById(R.id.text_temperature_current);
+        mTvApparentTemperature = findViewById(R.id.text_apparent_temperature);
+        mTvDayOfWeekNow = findViewById(R.id.text_day_of_week_now);
 
-
-       // mShowLocationTV = (TextView) findViewById(R.id.location_Text);
 
         //request in app permissions
 
@@ -70,6 +87,9 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
             ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION},101);
         }
 
+        //TODO:Don't forget to change this:
+        URL mWeatherUrl = NetworkUtils.buildUrlForCurrentWeather(mLatitude, mLongitude);
+        new DarkSkyQueryTask().execute(mWeatherUrl);
 
     }
 
@@ -81,17 +101,17 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
 
     void getLocation(){
 
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         Criteria locationCritera = new Criteria();
         locationCritera.setAccuracy(Criteria.ACCURACY_FINE);
         locationCritera.setPowerRequirement(Criteria.POWER_LOW);
 
-        locationProvider = locationManager.getBestProvider(locationCritera,true);
-        if (locationProvider != null) {
+        mLocationProvider = mLocationManager.getBestProvider(locationCritera,true);
+        if (mLocationProvider != null) {
             try {
 
-                locationManager.requestLocationUpdates(locationProvider, 60 * 1000, 0, (LocationListener) this);
-                Toast.makeText(this, "Best Provider is " + locationProvider, Toast.LENGTH_LONG).show();
+                mLocationManager.requestLocationUpdates(mLocationProvider, 60 * 1000, 0, (LocationListener) this);
+                Toast.makeText(this, "Best Provider is " + mLocationProvider, Toast.LENGTH_LONG).show();
             /*TODO the requestLocationUpdates methods is set to check location updates every minute. We should find a reasonable interval to balance performance and battery consumption
             */
 
@@ -103,8 +123,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
 
     @Override
     public void onLocationChanged(Location location) {
-        //mShowLocationTV.setText("Latitude: " + location.getLatitude() + "\n Longitude: " + location.getLongitude());
-
 
     }
 
@@ -121,6 +139,86 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
     @Override
     public void onProviderEnabled(String provider) {
 
+    }
+
+    //Temporary AsyncTask to get the results of the api and show them in the UI
+    //TODO: Should be replaced by a loader
+    public class DarkSkyQueryTask extends AsyncTask<URL, Void, String> {
+
+        @Override
+        protected String doInBackground(URL... params) {
+            URL weatherUrl = params[0];
+            String darkSkyApiResults = null;
+            try {
+                darkSkyApiResults = NetworkUtils.getResponseFromHttpUrl(weatherUrl);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return darkSkyApiResults;
+        }
+
+        @Override
+        protected void onPostExecute(String weatherResults) {
+            if (weatherResults != null && !weatherResults.equals("")) {
+                try {
+                    jsonUtils(weatherResults);
+                } catch (JSONException e) {
+                    Log.e(TAG_MAIN, "Error parsing JSON object");
+                }
+
+            } else {
+                Log.e(TAG_MAIN, "Problem with JSON results");
+            }
+        }
+    }
+
+    //TODO: In the future this method should be transferred to a class like the one in Sunshine app (OpenWeatherJsonUtils)
+    // and the constants("currently", etc) should be placed in there
+    /*
+    * This method is parsing the results we get from the api and getting SOME values;
+    * and showing the results in the text views
+     */
+    private void jsonUtils(String forecastJsonStr) throws JSONException {
+        JSONObject forecastJson = new JSONObject(forecastJsonStr);
+
+        //Getting the city name with the value of 'timezone'
+        String timezoneString = forecastJson.getString("timezone");
+        String[] splittingTimezoneToGetCity = timezoneString.split("/");
+        String city = splittingTimezoneToGetCity[1];
+        mTvCity.setText(city);
+
+        //Getting the 'currently' object and then its values
+        JSONObject currently = forecastJson.getJSONObject("currently");//TODO: turn these names into constants
+
+        //All this will probably go in a ContentValues and then we return that to be used
+        String precipProbability = currently.getString("precipProbability");
+        String currentTemperature = currently.getString("temperature");
+        String apparentTemperature = currently.getString("apparentTemperature");
+
+
+        double precipitationChanceFormatted;
+        try {
+            //get the number to be able to multiply and format
+            precipitationChanceFormatted = (Integer.parseInt(precipProbability)) * 100;
+            precipitationChanceFormatted = Double.parseDouble(
+                    formatValuesToDisplay(String.valueOf(precipitationChanceFormatted)));
+        } catch (NumberFormatException e) {
+            precipitationChanceFormatted = 0;
+            Log.e(TAG_MAIN, "Couldn't parse String to Integer");
+        }
+
+        String temperatureFormatted = formatValuesToDisplay(currentTemperature);
+        String apparentTemperatureFormatted = formatValuesToDisplay(apparentTemperature);
+
+        //TODO: This needs to be in the strings.xml
+        mTvPrecipitationProbability.setText((precipitationChanceFormatted) + "% chance for Rain");
+        mTvTemperature.setText(temperatureFormatted + "º");
+        mTvApparentTemperature.setText("Real Feel " + apparentTemperatureFormatted + "º");
+        mTvDayOfWeekNow.setText(temperatureFormatted + "º");
+    }
+
+    private String formatValuesToDisplay(String temperature) {
+        return String.format(Locale.ENGLISH, "%.0f", Double.parseDouble(temperature));
     }
 }
 

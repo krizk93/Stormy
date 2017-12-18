@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "855543791237",
+    "firebase_url": "https://stormy-42d18.firebaseio.com",
+    "project_id": "stormy-42d18",
+    "storage_bucket": "stormy-42d18.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:855543791237:android:d964e492abeee061",
+        "android_client_info": {
+          "package_name": "com.stormy"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "855543791237-imlqrarlc4dl5noimt0dvlh78ipg8phc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.stormy",
+            "certificate_hash": "984707346ea1f92f6e440f06ace655e0fecc9db6"
+          }
+        },
+        {
+          "client_id": "855543791237-snjk90gpmc8oabcmoqs9ilfvbtsgf1o6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCoB-bpjG6257nmB7LH_8lLqZbqRgswL6s"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "855543791237-snjk90gpmc8oabcmoqs9ilfvbtsgf1o6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

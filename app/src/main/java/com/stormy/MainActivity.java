@@ -3,6 +3,7 @@ package com.stormy;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.databinding.DataBindingUtil;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
@@ -19,6 +20,8 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.stormy.databinding.ActivityMainBinding;
+import com.stormy.utilities.DateUtils;
 import com.stormy.utilities.NetworkUtils;
 
 import org.json.JSONException;
@@ -32,12 +35,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
 
     private static final String TAG_MAIN = MainActivity.class.getSimpleName();
 
+    ActivityMainBinding mBinding;
+
     private TextView mTvCity,
-            mTvDate,
-            mTvPrecipitationProbability,
-            mTvTemperature,
-            mTvApparentTemperature,
-            mTvDayOfWeekNow;
+            mTvDate;
 
     private LocationManager mLocationManager;
     private String mLocationProvider;
@@ -51,6 +52,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mBinding = DataBindingUtil.setContentView(this, R.layout.activity_main);
 
         //Setting the action bar with our custom view:
         ActionBar actionBar = getSupportActionBar();
@@ -67,13 +70,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
         //Getting the views in the actionBar
         mTvCity = actionBar.getCustomView().findViewById(R.id.text_city);
         mTvDate = actionBar.getCustomView().findViewById(R.id.text_date);
-
-
-        mTvPrecipitationProbability = findViewById(R.id.text_precipitation_chance);
-        mTvTemperature = findViewById(R.id.text_temperature_current);
-        mTvApparentTemperature = findViewById(R.id.text_apparent_temperature);
-        mTvDayOfWeekNow = findViewById(R.id.text_day_of_week_now);
-
+        mTvDate.setText(DateUtils.formatDate(this));
 
         //request in app permissions
 
@@ -102,15 +99,15 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
     void getLocation(){
 
         mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        Criteria locationCritera = new Criteria();
-        locationCritera.setAccuracy(Criteria.ACCURACY_FINE);
-        locationCritera.setPowerRequirement(Criteria.POWER_LOW);
+        Criteria locationCriteria = new Criteria();
+        locationCriteria.setAccuracy(Criteria.ACCURACY_FINE);
+        locationCriteria.setPowerRequirement(Criteria.POWER_LOW);
 
-        mLocationProvider = mLocationManager.getBestProvider(locationCritera,true);
+        mLocationProvider = mLocationManager.getBestProvider(locationCriteria,true);
         if (mLocationProvider != null) {
             try {
 
-                mLocationManager.requestLocationUpdates(mLocationProvider, 60 * 1000, 0, (LocationListener) this);
+                mLocationManager.requestLocationUpdates(mLocationProvider, 6 * 1000, 0, (LocationListener) this);
                 Toast.makeText(this, "Best Provider is " + mLocationProvider, Toast.LENGTH_LONG).show();
             /*TODO the requestLocationUpdates methods is set to check location updates every minute. We should find a reasonable interval to balance performance and battery consumption
             */
@@ -123,7 +120,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
 
     @Override
     public void onLocationChanged(Location location) {
-
+        mLatitude = location.getLatitude();
+        mLongitude = location.getLongitude();
+        URL mWeatherUrl = NetworkUtils.buildUrlForCurrentWeather(mLatitude, mLongitude);
+        new DarkSkyQueryTask().execute(mWeatherUrl);
     }
 
     @Override
@@ -191,7 +191,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
         JSONObject currently = forecastJson.getJSONObject("currently");//TODO: turn these names into constants
 
         //All this will probably go in a ContentValues and then we return that to be used
-        String precipProbability = currently.getString("precipProbability");
+        Double precipProbability = currently.getDouble("precipProbability");
         String currentTemperature = currently.getString("temperature");
         String apparentTemperature = currently.getString("apparentTemperature");
 
@@ -199,9 +199,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
         double precipitationChanceFormatted;
         try {
             //get the number to be able to multiply and format
-            precipitationChanceFormatted = (Integer.parseInt(precipProbability)) * 100;
             precipitationChanceFormatted = Double.parseDouble(
-                    formatValuesToDisplay(String.valueOf(precipitationChanceFormatted)));
+                    formatValuesToDisplay(String.valueOf(precipProbability * 100)));
         } catch (NumberFormatException e) {
             precipitationChanceFormatted = 0;
             Log.e(TAG_MAIN, "Couldn't parse String to Integer");
@@ -211,14 +210,20 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
         String apparentTemperatureFormatted = formatValuesToDisplay(apparentTemperature);
 
         //TODO: This needs to be in the strings.xml
-        mTvPrecipitationProbability.setText((precipitationChanceFormatted) + "% chance for Rain");
-        mTvTemperature.setText(temperatureFormatted + "º");
-        mTvApparentTemperature.setText("Real Feel " + apparentTemperatureFormatted + "º");
-        mTvDayOfWeekNow.setText(temperatureFormatted + "º");
+        mBinding.textPrecipitationChance.setText((precipitationChanceFormatted) + "% chance for Rain");
+        mBinding.textTemperatureCurrent.setText(temperatureFormatted + "º");
+        mBinding.textApparentTemperature.setText("Real Feel " + apparentTemperatureFormatted + "º");
+
+        mBinding.textTemperatureNow.setText(temperatureFormatted + "º");
+
+        mBinding.textDayOfWeekNowPlus1.setText(DateUtils.getDayOfWeek(this, DateUtils.getNextDaysDate(1)));
+        mBinding.textDayOfWeekNowPlus2.setText(DateUtils.getDayOfWeek(this, DateUtils.getNextDaysDate(2)));
+        mBinding.textDayOfWeekNowPlus3.setText(DateUtils.getDayOfWeek(this, DateUtils.getNextDaysDate(3)));
+        mBinding.textDayOfWeekNowPlus4.setText(DateUtils.getDayOfWeek(this, DateUtils.getNextDaysDate(4)));
     }
 
     private String formatValuesToDisplay(String temperature) {
-        return String.format(Locale.ENGLISH, "%.0f", Double.parseDouble(temperature));
+        return String.format(Locale.getDefault(), "%.0f", Double.parseDouble(temperature));
     }
 }
 

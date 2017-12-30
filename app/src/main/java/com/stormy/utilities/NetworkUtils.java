@@ -103,11 +103,15 @@ public class NetworkUtils {
             + COMMA + ALERTS
             + COMMA + FLAGS;
 
+    //Excluding everything for now except the 'daily' data
+    private static final String parametersToExcludeForDaily = CURRENTLY
+            + COMMA + MINUTELY
+            + COMMA + HOURLY
+            + COMMA + ALERTS
+            + COMMA + FLAGS;
 
     /**
      * Builds the URL used to query DarkSky.
-     * We this method we are ONLY getting the 'currently' data (and using auto for the units)
-     * TODO: Make url for daily data (next 4 days)->  Time Machine Request
      *
      * @param latitude  The default should be where the user is currently located
      * @param longitude The default should be where the user is currently located
@@ -118,13 +122,15 @@ public class NetworkUtils {
         //latitude and longitude is in decimal degrees
         String latitudeAndLongitude = latitude + COMMA + longitude;
 
-        //I chose to use appendEncodedPath so he doesn't encode the commas,
-        // since we need to exclude several parameters, not just one.
-        //units = auto: automatically select units based on geographic location
-        //units: we will probably let the user select the options he prefers in settings, we can use the default? ('us')
+        /*
+        * I chose to use appendEncodedPath so he doesn't encode the commas,
+        * since we need to exclude several parameters, not just one.
+        * units = auto: automatically select units based on geographic location
+        * units: we will probably let the user select the options he prefers in settings, we can use the default? ('us')
+        */
         Uri builtUri = Uri.parse(WEATHER_BASE_URL).buildUpon()
                 .appendPath(KEY_DARK_SKY_API)
-                .appendEncodedPath(latitudeAndLongitude + "?" + EXCLUDE + parametersToExclude + "&" + UNITS + "si")
+                .appendEncodedPath(latitudeAndLongitude + "?" + EXCLUDE + parametersToExclude + "&" + UNITS + "auto")
                 .build();
 
         URL url = null;

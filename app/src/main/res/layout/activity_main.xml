@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.stormy.MainActivity">
+<RelativeLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/gradient_background_temporary"
-    tools:context="com.stormy.MainActivity">
+    android:background="@drawable/gradient_background_temporary">
 
     <TextView
         android:id="@+id/text_tip_text"
@@ -28,7 +29,7 @@
         android:layout_below="@id/text_tip_text"
         android:layout_marginLeft="16dp"
         android:layout_marginStart="16dp"
-        android:text="Time for a coat"
+        tools:text="Time for a coat"
         android:textColor="@android:color/white" />
 
     <TextView
@@ -40,7 +41,7 @@
         android:layout_below="@id/text_tip_of_day"
         android:layout_marginLeft="16dp"
         android:layout_marginStart="16dp"
-        android:text="15% chance for Rain"
+        tools:text="15% chance for Rain"
         android:textColor="@android:color/white" />
 
     <TextView
@@ -52,7 +53,7 @@
         android:layout_below="@id/text_precipitation_chance"
         android:layout_marginLeft="16dp"
         android:layout_marginStart="16dp"
-        android:text="Bring an umbrela"
+        tools:text="Bring an umbrela"
         android:textColor="@android:color/white" />
 
     <TextView
@@ -63,7 +64,7 @@
         android:layout_alignParentTop="true"
         android:layout_alignRight="@+id/text_apparent_temperature"
         android:layout_marginTop="20dp"
-        android:text="12º"
+        tools:text="12º"
         android:textColor="@android:color/white"
         android:textSize="86sp" />
 
@@ -76,7 +77,7 @@
         android:layout_below="@id/text_temperature_current"
         android:layout_marginEnd="20dp"
         android:layout_marginRight="20dp"
-        android:text="Real Feel 10º"
+        tools:text="Real Feel 10º"
         android:textColor="@android:color/white" />
 
     <ImageView
@@ -124,7 +125,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="12º" />
+                tools:text="12º" />
         </LinearLayout>
 
         <LinearLayout
@@ -139,7 +140,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="MON" />
+                android:textAllCaps="true"
+                tools:text="MON" />
 
             <ImageView
                 android:id="@+id/image_icon_weather_type_now_plus1"
@@ -153,7 +155,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="12º" />
+                tools:text="12º" />
         </LinearLayout>
 
         <LinearLayout
@@ -168,7 +170,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="TUE" />
+                android:textAllCaps="true"
+                tools:text="TUE" />
 
             <ImageView
                 android:id="@+id/image_icon_weather_type_now_plus2"
@@ -182,7 +185,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="12º" />
+                tools:text="12º" />
         </LinearLayout>
 
         <LinearLayout
@@ -197,7 +200,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="WED" />
+                android:textAllCaps="true"
+                tools:text="WED" />
 
             <ImageView
                 android:id="@+id/image_icon_weather_type_now_plus3"
@@ -211,7 +215,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="12º" />
+                tools:text="12º" />
         </LinearLayout>
 
         <LinearLayout
@@ -226,7 +230,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="THU" />
+                android:textAllCaps="true"
+                tools:text="THU" />
 
             <ImageView
                 android:id="@+id/image_icon_weather_type_now_plus4"
@@ -240,8 +245,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="12º" />
+                tools:text="12º" />
         </LinearLayout>
     </LinearLayout>
 
 </RelativeLayout>
+</layout>

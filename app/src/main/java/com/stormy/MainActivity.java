@@ -24,6 +24,7 @@ import com.stormy.databinding.ActivityMainBinding;
 import com.stormy.utilities.DateUtils;
 import com.stormy.utilities.NetworkUtils;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -42,6 +43,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
 
     private LocationManager mLocationManager;
     private String mLocationProvider;
+
+    private URL mWeatherUrl;
 
     //temporary lat and long (Lisbon):
     private double mLatitude = 38.734099;
@@ -85,7 +88,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
         }
 
         //TODO:Don't forget to change this:
-        URL mWeatherUrl = NetworkUtils.buildUrlForCurrentWeather(mLatitude, mLongitude);
+        mWeatherUrl = NetworkUtils.buildUrlToGetWeatherData(mLatitude, mLongitude);
         new DarkSkyQueryTask().execute(mWeatherUrl);
 
     }
@@ -122,7 +125,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
     public void onLocationChanged(Location location) {
         mLatitude = location.getLatitude();
         mLongitude = location.getLongitude();
-        URL mWeatherUrl = NetworkUtils.buildUrlForCurrentWeather(mLatitude, mLongitude);
+        mWeatherUrl = NetworkUtils.buildUrlToGetWeatherData(mLatitude, mLongitude);
         new DarkSkyQueryTask().execute(mWeatherUrl);
     }
 
@@ -173,53 +176,83 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
     }
 
     //TODO: In the future this method should be transferred to a class like the one in Sunshine app (OpenWeatherJsonUtils)
-    // and the constants("currently", etc) should be placed in there
+    // and the constants("currently", etc) should be placed in there; this should be refactored into several methods
     /*
     * This method is parsing the results we get from the api and getting SOME values;
     * and showing the results in the text views
      */
-    private void jsonUtils(String forecastJsonStr) throws JSONException {
-        JSONObject forecastJson = new JSONObject(forecastJsonStr);
+    private void jsonUtils(String forecastJsonString) throws JSONException {
+
+        JSONObject forecastJson = new JSONObject(forecastJsonString);
 
         //Getting the city name with the value of 'timezone'
-        String timezoneString = forecastJson.getString("timezone");
+        String timezoneString = forecastJson.getString("timezone");//TODO: turn these names into constants
         String[] splittingTimezoneToGetCity = timezoneString.split("/");
         String city = splittingTimezoneToGetCity[1];
         mTvCity.setText(city);
 
-        //Getting the 'currently' object and then its values
-        JSONObject currently = forecastJson.getJSONObject("currently");//TODO: turn these names into constants
+        //Getting the values of 'today'
+        JSONObject currently = forecastJson.getJSONObject("currently");
 
-        //All this will probably go in a ContentValues and then we return that to be used
+        //TODO:All this will probably go in a ContentValues and then we return that to be used
         Double precipProbability = currently.getDouble("precipProbability");
         String currentTemperature = currently.getString("temperature");
         String apparentTemperature = currently.getString("apparentTemperature");
 
-
+        //Formatting values to display
         double precipitationChanceFormatted;
         try {
-            //get the number to be able to multiply and format
             precipitationChanceFormatted = Double.parseDouble(
                     formatValuesToDisplay(String.valueOf(precipProbability * 100)));
         } catch (NumberFormatException e) {
             precipitationChanceFormatted = 0;
-            Log.e(TAG_MAIN, "Couldn't parse String to Integer");
+            Log.e(TAG_MAIN, "Couldn't parse String to Double");
         }
-
         String temperatureFormatted = formatValuesToDisplay(currentTemperature);
         String apparentTemperatureFormatted = formatValuesToDisplay(apparentTemperature);
 
-        //TODO: This needs to be in the strings.xml
+        //Displaying formatted values
+        //TODO: These strings needs to be in the strings.xml
         mBinding.textPrecipitationChance.setText((precipitationChanceFormatted) + "% chance for Rain");
         mBinding.textTemperatureCurrent.setText(temperatureFormatted + "º");
         mBinding.textApparentTemperature.setText("Real Feel " + apparentTemperatureFormatted + "º");
 
         mBinding.textTemperatureNow.setText(temperatureFormatted + "º");
 
+        //Setting the next days of the week
         mBinding.textDayOfWeekNowPlus1.setText(DateUtils.getDayOfWeek(this, DateUtils.getNextDaysDate(1)));
         mBinding.textDayOfWeekNowPlus2.setText(DateUtils.getDayOfWeek(this, DateUtils.getNextDaysDate(2)));
         mBinding.textDayOfWeekNowPlus3.setText(DateUtils.getDayOfWeek(this, DateUtils.getNextDaysDate(3)));
         mBinding.textDayOfWeekNowPlus4.setText(DateUtils.getDayOfWeek(this, DateUtils.getNextDaysDate(4)));
+
+        //Getting the values of daily temperature
+        JSONObject daily = forecastJson.getJSONObject("daily");
+        JSONArray data = daily.getJSONArray("data");
+
+        for (int i = 1; i < data.length(); i++) {
+            if (i == 5) break;
+
+            JSONObject eachDay = data.getJSONObject(i);
+            String temperatureForEachDay = eachDay.getString("temperatureHigh");
+
+            //Displaying the temperatures
+            switch (i) {
+                case 1:
+                    mBinding.textTemperatureNowPlus1.setText(formatValuesToDisplay(temperatureForEachDay) + "º");
+                    break;
+                case 2:
+                    mBinding.textTemperatureNowPlus2.setText(formatValuesToDisplay(temperatureForEachDay) + "º");
+                    break;
+                case 3:
+                    mBinding.textTemperatureNowPlus3.setText(formatValuesToDisplay(temperatureForEachDay) + "º");
+                    break;
+                case 4:
+                    mBinding.textTemperatureNowPlus4.setText(formatValuesToDisplay(temperatureForEachDay) + "º");
+                    break;
+                default:
+                    Log.e(TAG_MAIN, "Invalid object from the daily json response.");
+            }
+        }
     }
 
     private String formatValuesToDisplay(String temperature) {

@@ -44,9 +44,6 @@ public class NetworkUtils {
     //Your Dark Sky secret key. (Your secret key must be kept secret)
     private static final String KEY_DARK_SKY_API = "PutApiKeyHereToTest";
 
-    //Either be a UNIX time (that is, seconds since midnight GMT on 1 Jan 1970) or a string formatted
-    //Required for Time Machine Request
-    private long TIME;
 
     /*
     *Optional parameters (HTTP query parameters)
@@ -96,16 +93,8 @@ public class NetworkUtils {
     //String used several times to perform the request
     private static final String COMMA = ",";
 
-    //Excluding everything for now except the 'currently' data
+    //Excluding everything for now except the 'currently and daily' data
     private static final String parametersToExclude = MINUTELY
-            + COMMA + HOURLY
-            + COMMA + DAILY
-            + COMMA + ALERTS
-            + COMMA + FLAGS;
-
-    //Excluding everything for now except the 'daily' data
-    private static final String parametersToExcludeForDaily = CURRENTLY
-            + COMMA + MINUTELY
             + COMMA + HOURLY
             + COMMA + ALERTS
             + COMMA + FLAGS;
@@ -117,7 +106,7 @@ public class NetworkUtils {
      * @param longitude The default should be where the user is currently located
      * @return The URL to use to query the DarkSky for the current weather.
      */
-    public static URL buildUrlForCurrentWeather(@NonNull double latitude, @NonNull double longitude) {
+    public static URL buildUrlToGetWeatherData(@NonNull double latitude, @NonNull double longitude) {
 
         //latitude and longitude is in decimal degrees
         String latitudeAndLongitude = latitude + COMMA + longitude;
